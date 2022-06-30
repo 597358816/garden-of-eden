@@ -1,15 +1,11 @@
 #pragma once
 #include<stdio.h>
 #include<stdlib.h> 
-#define LENGTH 8
+#define LENGTH 16
 struct GOETreeBinary {
 	int configuration[LENGTH];
 	GOETreeBinary* son[2];
 	GOETreeBinary* father;
-};
-struct StateNode {
-	int configuration[LENGTH];
-	StateNode* next;
 };
 
 struct GOEQueueNode {
@@ -23,8 +19,7 @@ struct GOEQueue {
 	GOEQueueNode* tail;
 	GOEQueueNode* first;
 };
-
-long powerOfTwoOfTwo(int num);
+int powerOfTwo(int num);
 int* getRules(int *rules,int num);
 
 GOETreeBinary* initGOENode();
@@ -38,3 +33,4 @@ GOETreeBinary* popGOEQueue(GOEQueue* queue);
 void destroyGOEQueue(GOEQueue* queue);
 void destroyGOETree(GOETreeBinary* node);
 
+int findLoopConfiguration(GOETreeBinary* node, int input, int origin);

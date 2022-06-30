@@ -1,20 +1,16 @@
 #include"goe.h"
 
-long powerOfTwoOfTwo(int num) {
+int powerOfTwo(int num) {
 	int ans = 1;
 	int i;
 	for (i = 0; i < num; i++) {
 		ans *= 2;
 	}
-	long ret = 1;
-	for (i = 0; i < ans; i++) {
-		ret *= 2;
-	}
-	return ret;
+	return ans;
 }
 
 int* getRules(int* rules, int num) {
-	int i, j;
+	int i;
 	for (i = LENGTH - 1; i >= 0; i--) {
 		rules[i] = num % 2;
 		num /= 2;
@@ -65,22 +61,24 @@ GOETreeBinary* createGOERoot(int* rules, FILE* file) {
 		//	root->configuration[i] = 1;
 		//}
 		//else if (rules[i] == 0) {
-			root->configuration[i] = 0;
+			root->configuration[i] = 1;
 		//}
 	}
-	root->configuration[0] = 1;
-	root->configuration[1] = 1;
+	//root->configuration[0] = 1;
+	//root->configuration[1] = 1;
 	//使用队列实现层序遍历
 	GOEQueue* queue = initGOEQueue();
 	pushGOEQueue(queue, root);
 	//此时队列中有root
 	while (queue->head != queue->tail) {
 		GOETreeBinary* temp = popGOEQueue(queue);
+		//如果途中出现GOE或者其他不符合的情况，直接返回
 		if (!createGOETree(rules, temp, queue, file)) {
 			destroyGOEQueue(queue);
 			return root;
 		}
 	}
+	//构造树完毕
 	destroyGOEQueue(queue);
 	for (i = 0; i < LENGTH; i++) {
 		fprintf(file, "%d", rules[i]);
@@ -96,7 +94,7 @@ GOETreeBinary* createGOETree(int* rules, GOETreeBinary* node, GOEQueue* queue, F
 	//如果该块为空，则存在GOE
 	int judge = 0;
 	for (i = 0; i < LENGTH; i++) {
-		if (node->configuration[i] == 1&& i % 2 == 0) {
+		if (node->configuration[i] == 1) {
 			judge = 1;
 		}
 	}
@@ -119,6 +117,20 @@ GOETreeBinary* createGOETree(int* rules, GOETreeBinary* node, GOEQueue* queue, F
 
 		return nullptr;
 	}
+	//*
+	if (node->father && node->father->father) {
+		for (i = 0; i < LENGTH; i++) {
+			if (node->configuration[i] == 1 && findLoopConfiguration(node->father, i, i)) {
+				break;
+			}
+		}
+		if (i == LENGTH) {
+			return nullptr;
+		}
+	}
+	//*/
+
+
 
 	//如果与已知状态相同，则不创建树，什么也不做
 	//如果该状态不存在，则将其子节点加入链表并且创建树
@@ -163,6 +175,7 @@ GOEQueue* initGOEQueue()
 	queue->first = node;
 	queue->head = node;
 	queue->tail = node;
+	queue->size = 0;
 	return queue;
 }
 
@@ -199,9 +212,34 @@ void destroyGOEQueue(GOEQueue* queue) {
 	free(queue);
 }
 void destroyGOETree(GOETreeBinary* node) {
+	//递归销毁树
 	if (node->son[0])
 		destroyGOETree(node->son[0]);
 	if (node->son[1])
 		destroyGOETree(node->son[1]);
 	free(node);
+}
+
+int findLoopConfiguration(GOETreeBinary* node, int input, int origin) {
+	int i;
+	if (!node->father) {
+		if (origin % (LENGTH / 2) == input / 2) {
+			//找到了
+			return 1;
+		}
+		else {
+			return 0;
+		}
+	}
+
+	for (i = 0; i < LENGTH; i++) {
+		if (node->configuration[i] == 1 && i % (LENGTH / 2) == input / 2) {
+			//存在原像 往前找
+			//前面找到了，这个返回1
+			if (findLoopConfiguration(node->father, i, origin)) {
+				return 1;
+			}
+		}
+	}
+	return 0;
 }
